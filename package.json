@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "dev": "tsx src/index.ts",
     "test": "tsx tests/index.ts",
     "build": "rollup -c"
   },
