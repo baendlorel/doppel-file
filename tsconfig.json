@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "esnext", // 输出的 JavaScript 版本
+    "module": "esnext", // 使用 ES 模块
+    "moduleResolution": "node",
+    "esModuleInterop": true, // 允许 CommonJS 模块和 ES 模块的互操作
+    "skipLibCheck": true, // 跳过库文件类型检查
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*.ts" // 包含的 TypeScript 文件路径
+  ]
+}

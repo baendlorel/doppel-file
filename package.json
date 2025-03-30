@@ -1,0 +1,22 @@
+{
+  "name": "doppel-file",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "tsx tests/index.ts",
+    "build": "rollup -c"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^22.13.14",
+    "rollup": "^4.38.0",
+    "tslib": "^2.8.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
