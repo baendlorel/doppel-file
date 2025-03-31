@@ -100,7 +100,7 @@ const main = (dirs: string[], excludes?: string[]) => {
   const files = dirs.reduce((prev, cur) => getAllFiles(cur, EXCLUDE).concat(prev), []);
   console.timeEnd('查找所有文件');
   console.time('构建文件大小映射');
-  const sizeMap = new Map<number, string[]>();
+  const sizeSuffixMap = new Map<number, Map<string, string[]>>();
   for (let i = 0; i < files.length; i++) {
     const s = statSync(files[i]);
     // 跳过太小的文件
@@ -108,16 +108,16 @@ const main = (dirs: string[], excludes?: string[]) => {
       continue;
     }
 
-    const list = sizeMap.get(s.size);
+    const list = sizeSuffixMap.get(s.size);
     if (list) {
       list.push(files[i]);
     } else {
-      sizeMap.set(s.size, [files[i]]);
+      sizeSuffixMap.set(s.size, [files[i]]);
     }
   }
   console.timeEnd('构建文件大小映射');
   console.log(`大于1KB的文件数量: ${formatNum(files.length)}`);
-  console.log(`根据文件大小分组组数: ${formatNum(sizeMap.size)}`);
+  console.log(`根据文件大小分组组数: ${formatNum(sizeSuffixMap.size)}`);
 
   // 看一下前几名数量最多的是谁
   // const sizes = [...sizeMap];
@@ -127,20 +127,20 @@ const main = (dirs: string[], excludes?: string[]) => {
   // 统计一下总共要对比多少次
 
   let calculationCount = 0;
-  for (const [size, list] of sizeMap) {
+  for (const [size, list] of sizeSuffixMap) {
     if (list.length <= 1) {
       continue;
     }
     calculationCount += (list.length * (list.length - 1)) / 2;
   }
 
-  console.log(`预计总共要对比的次数 : ${calculationCount}`);
+  console.log(`预计总共要对比的次数 : ${formatNum(calculationCount)}`);
 
   const hashMap = new Map<string, Set<string>>();
 
   console.time('全套对比');
   // 开始处理，小于1KB的文件忽略，只有一个的文件忽略
-  for (const [size, list] of sizeMap) {
+  for (const [size, list] of sizeSuffixMap) {
     if (list.length <= 1) {
       continue;
     }
@@ -183,4 +183,5 @@ const main = (dirs: string[], excludes?: string[]) => {
   const bytes = formatBytes(statSync('duplicate.txt').size);
   console.log(`duplicate.txt 文件大小: ${bytes}`);
 };
-main(['/home/aldia']);
+// main(['/home/aldia']);
+main(['C:\\', 'D:\\', 'E:\\', 'F:\\']);
