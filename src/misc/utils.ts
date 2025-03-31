@@ -36,5 +36,15 @@ export const formatNum = (num: number | string): string => {
   return decimal ? `${formattedInt}.${decimal}` : formattedInt;
 };
 
-export const getHash = (filePath: string, algorithm = 'blake3'): string =>
-  createHash(algorithm).update(fs.readFileSync(filePath)).digest('hex');
+const hashCache = new Map<string, string>();
+export const clearHashCache = () => hashCache.clear();
+export const getHash = (filePath: string): string => {
+  let h = hashCache.get(filePath);
+  if (h) {
+    return h;
+  } else {
+    h = createHash('md5').update(fs.readFileSync(filePath)).digest('hex');
+    hashCache.set(filePath, h);
+    return h;
+  }
+};

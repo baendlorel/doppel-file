@@ -1,6 +1,6 @@
 import { formatRightAlignedTable, formatTable } from './format-table';
 
-const formatBytes = (bytes: number, decimals = 0): string => {
+export const formatBytes = (bytes: number, decimals = 0): string => {
   const K = 1000;
   if (bytes < 0) {
     throw new Error('Byte size cannot be negative');
