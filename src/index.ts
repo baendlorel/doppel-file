@@ -1,9 +1,10 @@
 import { statSync, writeFileSync } from 'fs';
 import { clearHashCache, formatBytes, formatNum, getAllFiles, getHash } from './misc';
+import { parse } from 'path';
 
 const main = (dirs: string[], excludes?: string[]) => {
   /** 最小文件大小，超过这个值再开始对比是否相同 */
-  const MIN_SIZE = 1000;
+  const MIN_SIZE = 10000;
   const EXCLUDE = new Set(
     excludes ?? [
       'node_modules',
@@ -101,22 +102,32 @@ const main = (dirs: string[], excludes?: string[]) => {
   console.timeEnd('查找所有文件');
   console.time('构建文件大小映射');
   const sizeSuffixMap = new Map<number, Map<string, string[]>>();
+  let totalFileCount = 0;
   for (let i = 0; i < files.length; i++) {
     const s = statSync(files[i]);
     // 跳过太小的文件
     if (s.size < MIN_SIZE) {
       continue;
     }
+    totalFileCount++;
 
-    const list = sizeSuffixMap.get(s.size);
-    if (list) {
-      list.push(files[i]);
+    const suffixMap = sizeSuffixMap.get(s.size);
+    const parsed = parse(files[i]);
+    if (suffixMap) {
+      const suffixList = suffixMap.get(parsed.ext);
+      if (suffixList) {
+        suffixList.push(files[i]);
+      } else {
+        suffixMap.set(parsed.ext, [files[i]]);
+      }
     } else {
-      sizeSuffixMap.set(s.size, [files[i]]);
+      const newSuffixMap = new Map<string, string[]>();
+      newSuffixMap.set(parsed.ext, [files[i]]);
+      sizeSuffixMap.set(s.size, newSuffixMap);
     }
   }
   console.timeEnd('构建文件大小映射');
-  console.log(`大于1KB的文件数量: ${formatNum(files.length)}`);
+  console.log(`大于${formatBytes(MIN_SIZE)}的文件数量: ${formatNum(totalFileCount)}`);
   console.log(`根据文件大小分组组数: ${formatNum(sizeSuffixMap.size)}`);
 
   // 看一下前几名数量最多的是谁
@@ -127,37 +138,50 @@ const main = (dirs: string[], excludes?: string[]) => {
   // 统计一下总共要对比多少次
 
   let calculationCount = 0;
-  for (const [size, list] of sizeSuffixMap) {
-    if (list.length <= 1) {
-      continue;
+  for (const [size, suffixMap] of sizeSuffixMap) {
+    for (const [suffix, list] of suffixMap) {
+      if (list.length <= 1) {
+        continue;
+      }
+      calculationCount += (list.length * (list.length - 1)) / 2;
     }
-    calculationCount += (list.length * (list.length - 1)) / 2;
   }
-
   console.log(`预计总共要对比的次数 : ${formatNum(calculationCount)}`);
-
-  const hashMap = new Map<string, Set<string>>();
+  console.log('开始对比', `现在是${new Date().toLocaleString()}`);
 
   console.time('全套对比');
+  const cc1000 = Math.round(calculationCount / 1000);
+  let counter = 0;
+  const hashMap = new Map<string, Set<string>>();
   // 开始处理，小于1KB的文件忽略，只有一个的文件忽略
-  for (const [size, list] of sizeSuffixMap) {
-    if (list.length <= 1) {
-      continue;
-    }
-    // 一定要计算hash，因为可能有多个文件互相相同，最后要按照hash值分类的
-    // 这里开始处理
-    clearHashCache();
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const h1 = getHash(list[i]);
-        const h2 = getHash(list[j]);
-        if (h1 === h2) {
-          const hlist = hashMap.get(h1);
-          if (hlist) {
-            hlist.add(list[i]);
-            hlist.add(list[j]);
-          } else {
-            hashMap.set(h1, new Set([list[i], list[j]]));
+  for (const [size, suffixMap] of sizeSuffixMap) {
+    for (const [suffix, list] of suffixMap) {
+      if (list.length <= 1) {
+        continue;
+      }
+
+      // 一定要计算hash，因为可能有多个文件互相相同，最后要按照hash值分类的
+      // 这里开始处理
+      clearHashCache();
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          counter++;
+          if (counter % cc1000 === 0) {
+            console.timeLog(
+              '全套对比',
+              `现在是${counter}次 ${new Date().toLocaleString()}`
+            );
+          }
+          const h1 = getHash(list[i]);
+          const h2 = getHash(list[j]);
+          if (h1 === h2) {
+            const hlist = hashMap.get(h1);
+            if (hlist) {
+              hlist.add(list[i]);
+              hlist.add(list[j]);
+            } else {
+              hashMap.set(h1, new Set([list[i], list[j]]));
+            }
           }
         }
       }
