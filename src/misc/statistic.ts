@@ -1,5 +1,5 @@
-import fs, { readFileSync } from 'fs';
-import { formatNum, getAllFiles } from './misc';
+import fs from 'fs';
+import { formatNum, getAllFiles } from './utils';
 
 const main = () => {
   /** 最小文件大小，超过这个值再开始对比是否相同 */
@@ -26,8 +26,6 @@ const main = () => {
     }
   }
   console.timeEnd('构建文件大小映射');
-  console.log(`>1KB total files: ${formatNum(files.length)}`);
-  console.log(`total groups:${formatNum(sizeMap.size)}`);
 
   // 看一下前几名数量最多的是谁
   // const sizes = [...sizeMap];
@@ -35,25 +33,25 @@ const main = () => {
   // console.table(sizes.slice(0, 20).map((v) => ({ size: v[0], count: v[1].length })));
 
   // 开始处理，小于1KB的文件忽略，只有一个的文件忽略
+  let c = 0;
+  let calculateTime = 0;
   for (const [size, list] of sizeMap) {
     if (list.length <= 1) {
       continue;
     }
-
-    // 小于1MB的文件，直接对比
-    if (size < MIN_HASH_SIZE) {
+    if (size < MIN_HASH_SIZE)
       // 这里开始处理
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i; j < list.length; j++) {
-          const file1 = readFileSync(list[i]);
-          const file2 = readFileSync(list[j]);
-        }
-      }
-    } else {
       for (let i = 0; i < list.length; i++) {
         const file = list[i];
       }
-    }
+    c++;
+    calculateTime += list.length ** 2;
   }
+  console.log(`>1KB total files: ${formatNum(files.length)}`);
+  console.log(`total groups:${formatNum(sizeMap.size)}`);
+  console.log(`length>1 groups: ${formatNum(c)}`);
+  console.log(`calculateTime: ${formatNum(calculateTime)}`);
+  console.log(`brute force calculate time: ${formatNum(files.length ** 2)}`);
+  const savedPercent = (1 - calculateTime / files.length ** 2) * 100;
+  console.log(`calculatime saved: ${savedPercent.toFixed(3)}%`);
 };
-main();

@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -34,3 +35,6 @@ export const formatNum = (num: number | string): string => {
   const formattedInt = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return decimal ? `${formattedInt}.${decimal}` : formattedInt;
 };
+
+export const getHash = (filePath: string, algorithm = 'blake3'): string =>
+  createHash(algorithm).update(fs.readFileSync(filePath)).digest('hex');
