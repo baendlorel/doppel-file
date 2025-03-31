@@ -28,3 +28,9 @@ export const getAllFiles = (root: string, exclude: Set<string>) => {
   _scanDir(root);
   return files;
 };
+
+export const formatNum = (num: number | string): string => {
+  const [integer, decimal] = num.toString().split('.');
+  const formattedInt = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return decimal ? `${formattedInt}.${decimal}` : formattedInt;
+};
